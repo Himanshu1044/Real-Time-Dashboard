@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-Time Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            display: flex;
+            gap: 40px;
+            padding: 20px;
+        }
+
+        .box {
+            border: 1px solid #ccc;
+            padding: 20px;
+            width: 300px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            padding: 5px 0;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <div class="box">
+        <h2>🟢 Online Users</h2>
+        <ul id="users"></ul>
+    </div>
+
+    <div class="box">
+        <h2>📊 Activity Feed</h2>
+        <ul id="events"></ul>
+    </div>
+
+    <div class="box">
+        <h2>🔍 Filter Events</h2>
+        <select id="filter">
+            <option value="ALL">All</option>
+            <option value="CLICK">Click</option>
+            <option value="LOGIN">Login</option>
+            <option value="ERROR">Error</option>
+        </select>
+    </div>
+
+    <button id="sendBtn">Send Test Event</button>
+
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+    <script>
+        const socket = io("http://localhost:3000");
+
+        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTc3Njg5NDk3MSwiZXhwIjoxNzc2OTgxMzcxfQ.UGWtorsOHav5fSebxYhq4LIKhWkldoFsQ2J6wgG1E60";
+
+        const usersList = document.getElementById("users");
+        const eventsList = document.getElementById("events");
+        const filter = document.getElementById("filter");
+        const sendBtn = document.getElementById("sendBtn");
+
+        let currentFilter = "ALL";
+
+        // -------------------------
+        // FILTER HANDLING
+        // -------------------------
+        filter.addEventListener("change", (e) => {
+            currentFilter = e.target.value;
+        });
+
+        // -------------------------
+        // SOCKET CONNECTION
+        // -------------------------
+        socket.on("connect", () => {
+            console.log("Connected:", socket.id);
+
+            // Authenticate AFTER connection
+            socket.emit("authenticate", token);
+        });
+
+        socket.on("connect_error", (err) => {
+            console.error("Connection Error:", err.message);
+        });
+
+        // -------------------------
+        // ONLINE USERS
+        // -------------------------
+        socket.on("onlineUsers", (users) => {
+            usersList.innerHTML = "";
+
+            users.forEach(user => {
+                const li = document.createElement("li");
+                li.textContent = "User " + user;
+                usersList.appendChild(li);
+            });
+        });
+
+        // -------------------------
+        // REAL-TIME EVENTS
+        // -------------------------
+        socket.on("eventUpdate", (event) => {
+
+            if (currentFilter !== "ALL" && event.event_type !== currentFilter) {
+                return;
+            }
+
+            const li = document.createElement("li");
+            li.textContent = `${event.event_type} - ${event.event_data}`;
+
+            eventsList.prepend(li);
+        });
+
+        // -------------------------
+        // LOAD EXISTING EVENTS
+        // -------------------------
+        async function loadEvents() {
+            try {
+                const res = await fetch("http://localhost:3000/api/events", {
+                    headers: {
+                        Authorization: "Bearer " + token
+                    }
+                });
+
+                const events = await res.json();
+
+                eventsList.innerHTML = "";
+
+                events.forEach(event => {
+                    const li = document.createElement("li");
+                    li.textContent = `${event.event_type} - ${event.event_data}`;
+                    eventsList.appendChild(li);
+                });
+
+            } catch (err) {
+                console.error("Failed to load events:", err);
+            }
+        }
+
+        loadEvents();
+
+        // -------------------------
+        // SEND EVENT
+        // -------------------------
+        sendBtn.addEventListener("click", () => {
+            console.log("Sending event...");
+
+            socket.emit("newEvent", {
+                eventType: "CLICK",
+                eventData: "Button clicked from UI"
+            });
+        });
+    </script>
+
+</body>
+</html>
