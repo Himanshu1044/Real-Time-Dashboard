@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Dashboard</title>
+    <style>
+        body {
+            font-family: Arial;
+            display: flex;
+            gap: 40px;
+            padding: 20px;
+        }
+
+        .box {
+            border: 1px solid #ccc;
+            padding: 20px;
+            width: 300px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="box">
+        <h2>🟢 Online Users</h2>
+        <ul id="users"></ul>
+    </div>
+
+    <div class="box">
+        <h2>📊 Activity Feed</h2>
+        <ul id="events"></ul>
+
+        <button onclick="sendEvent()">Send Event</button>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+    <script>
+        const socket = io("http://localhost:3000");
+
+        //  get token first
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            alert("Not logged in");
+            window.location.href = "/login.html";
+        }
+
+        const usersList = document.getElementById("users");
+        const eventsList = document.getElementById("events");
+
+        socket.on("connect", () => {
+            console.log("Connected:", socket.id);
+
+            socket.emit("authenticate", token);
+
+            socket.emit("newEvent", {
+                eventType: "LOGIN",
+                eventData: "User logged in"
+            });
+
+            socket.emit("newEvent", {
+                eventType: "PAGE_VISIT",
+                eventData: "User visited dashboard"
+            });
+        });
+
+        // Online users
+        socket.on("onlineUsers", (users) => {
+            usersList.innerHTML = "";
+
+            users.forEach(user => {
+                const li = document.createElement("li");
+                li.textContent = "User " + user;
+                usersList.appendChild(li);
+            });
+        });
+
+        // 📊 Event feed
+        socket.on("eventUpdate", (event) => {
+            const li = document.createElement("li");
+            li.textContent = `${event.event_type} - ${event.event_data}`;
+            eventsList.prepend(li);
+        });
+
+        // 🖱 click tracking (global)
+        document.addEventListener("click", (e) => {
+            socket.emit("newEvent", {
+                eventType: "CLICK",
+                eventData: `User clicked ${e.target.tagName}`
+            });
+        });
+    </script>

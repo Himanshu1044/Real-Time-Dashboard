@@ -1,0 +1,92 @@
+<!-- Registration 12 - Bootstrap Brain Component -->
+<link rel="stylesheet" href="https://unpkg.com/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<link rel="stylesheet"
+    href="https://unpkg.com/bs-brain@2.0.4/components/registrations/registration-12/assets/css/registration-12.css">
+<section class="py-3 py-md-5 py-xl-8">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="mb-5">
+                    <h2 class="display-5 fw-bold text-center">Sign up</h2>
+                    <p class="text-center m-0">Already have an account? <a href="login.html"
+                            class="link-primary text-decoration-none">Sign in</a></p>
+                </div>
+            </div>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-10 col-xl-8">
+                <div class="row gy-5 justify-content-center">
+                    <div class="col-12 col-lg-5">
+                        <form>
+                            <div class="row gy-3 overflow-hidden">
+                                <div class="col-12">
+                                    <div class="form-floating mb-3">
+                                        <input type="text" class="form-control border-0 border-bottom rounded-0"
+                                            name="Name" id="firstName" placeholder="First Name" required>
+                                        <label for="Name" class="form-label">First Name</label>
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="form-floating mb-3">
+                                        <input type="email" class="form-control border-0 border-bottom rounded-0"
+                                            name="email" id="email" placeholder="name@example.com" required>
+                                        <label for="email" class="form-label">Email</label>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-floating mb-3">
+                                        <input type="password" class="form-control border-0 border-bottom rounded-0"
+                                            name="password" id="password" value="" placeholder="Password" required>
+                                        <label for="password" class="form-label">Password</label>
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="d-grid">
+                                        <button class="btn btn-lg btn-dark rounded-0 fs-6" type="button"
+                                            onclick="signup()">Sign
+                                            up</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</section>
+
+<script>
+    async function signup() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        try {
+            const res = await fetch("http://localhost:3000/api/auth/signup", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                alert("Signup successful");
+
+                // redirect to login
+                window.location.href = "login.html";
+            } else {
+                alert(data.message || "Signup failed");
+            }
+
+        } catch (err) {
+            console.error(err);
+            alert("Something went wrong");
+        }
+    }
+</script>
